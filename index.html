@@ -1,147 +1,223 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexus Lightweight Clash</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Lightweight Game</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      background: linear-gradient(to top, #1b2735, #090a0f);
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
       font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #0e0f1a, #1c1d30);
       overflow: hidden;
     }
-    #game {
-      position: relative;
-      width: 100vw;
+    .game-container {
+      width: 100%;
       height: 100vh;
-      background: url('https://i.imgur.com/XwbzGoZ.jpg') center/cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .elixir-bar {
+      width: 80%;
+      height: 20px;
+      background: #333;
+      border: 2px solid #555;
+      border-radius: 10px;
+      margin: 10px;
+      overflow: hidden;
+    }
+    .elixir-fill {
+      height: 100%;
+      background: linear-gradient(to right, #6ef1ff, #8d3eff);
+      transition: width 0.3s ease-in-out;
+    }
+    .battlefield {
+      position: relative;
+      width: 90%;
+      height: 60vh;
+      background: #2b2b4f;
+      border: 4px solid #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card-bar {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      justify-content: center;
+    }
+    .card {
+      width: 70px;
+      height: 100px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      cursor: grab;
+    }
+    .unit, .enemy-unit {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: red;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
+      color: #fff;
+    }
+    .enemy-unit {
+      background: green;
+    }
+    .hp-bar {
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      height: 5px;
+      background: lime;
+      transition: width 0.2s;
     }
     .tower {
-      width: 50px;
-      height: 100px;
-      background: #888;
       position: absolute;
-      bottom: 10px;
-      border: 4px solid #222;
-      border-radius: 10px;
+      width: 40px;
+      height: 60px;
+      background: #555;
+      border: 2px solid #222;
     }
-    .tower.enemy {
-      top: 10px;
-      bottom: auto;
+    .player-tower {
+      bottom: 0;
+      left: 45%;
     }
-    #left-tower { left: 20%; }
-    #right-tower { right: 20%; }
-    #enemy-left { left: 20%; }
-    #enemy-right { right: 20%; }.unit {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  position: absolute;
-  background: red;
-}
-
-.card-bar {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 120px;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-.card {
-  width: 80px;
-  height: 100px;
-  background: #333;
-  border-radius: 10px;
-  color: white;
-  text-align: center;
-  padding: 10px;
-  user-select: none;
-  touch-action: none;
-}
-
-.elixir-bar {
-  position: absolute;
-  bottom: 130px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;
-  height: 20px;
-  background: #555;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.elixir-fill {
-  height: 100%;
-  background: #9c27b0;
-  width: 0%;
-}
-
+    .enemy-tower {
+      top: 0;
+      left: 45%;
+    }
+    .footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-  <div id="game">
-    <div id="enemy-left" class="tower enemy"></div>
-    <div id="enemy-right" class="tower enemy"></div>
-    <div id="left-tower" class="tower"></div>
-    <div id="right-tower" class="tower"></div>
-    <div class="elixir-bar"><div id="elixir-fill" class="elixir-fill"></div></div>
-    <div class="card-bar">
-      <div class="card" data-cost="3" data-type="skeleton">Skelette</div>
-      <div class="card" data-cost="5" data-type="ritter">Ritter</div>
-      <div class="card" data-cost="4" data-type="kobold">Kobolde</div>
-      <div class="card" data-cost="7" data-type="schuetze">Schütze</div>
+  <div class="game-container">
+    <div class="elixir-bar"><div class="elixir-fill" id="elixir"></div></div>
+    <div class="battlefield" id="field">
+      <div class="tower player-tower" id="playerTower"></div>
+      <div class="tower enemy-tower" id="enemyTower"></div>
     </div>
+    <div class="card-bar">
+      <div class="card" data-unit="skeletons" data-cost="3">Skelette</div>
+      <div class="card" data-unit="knight" data-cost="5">Ritter</div>
+      <div class="card" data-unit="goblins" data-cost="4">Kobolde</div>
+      <div class="card" data-unit="archer" data-cost="7">Schütze</div>
+    </div>
+    <div class="footer">Powered by Nexus Software Corp. | 2025 DE-VAE ©</div>
   </div>  <script>
-    let elixir = 0;
+    let elixir = 10;
     const maxElixir = 10;
-    const fill = document.getElementById('elixir-fill');
+    const elixirFill = document.getElementById("elixir");
+    const field = document.getElementById("field");
+
+    function updateElixir() {
+      elixirFill.style.width = `${(elixir / maxElixir) * 100}%`;
+    }
 
     setInterval(() => {
       if (elixir < maxElixir) {
         elixir++;
-        fill.style.width = (elixir * 10) + '%';
+        updateElixir();
       }
     }, 2000);
 
-    const game = document.getElementById('game');
-
-    document.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('touchstart', e => {
-        const type = card.dataset.type;
+    document.querySelectorAll(".card").forEach(card => {
+      card.addEventListener("click", () => {
+        const unitType = card.dataset.unit;
         const cost = parseInt(card.dataset.cost);
         if (elixir >= cost) {
-          const touch = e.touches[0];
-          const unit = document.createElement('div');
-          unit.className = 'unit';
-          unit.style.left = (touch.clientX - 15) + 'px';
-          unit.style.top = (window.innerHeight - 140) + 'px';
-          unit.style.background = type === 'ritter' ? 'blue' :
-                                  type === 'kobold' ? 'green' :
-                                  type === 'schuetze' ? 'orange' : 'gray';
-          game.appendChild(unit);
+          spawnUnit(unitType, false);
           elixir -= cost;
-          fill.style.width = (elixir * 10) + '%';
-          moveUnit(unit, type);
+          updateElixir();
         }
       });
     });
 
-    function moveUnit(unit, type) {
-      let pos = parseInt(unit.style.top);
-      const interval = setInterval(() => {
-        if (pos < 50) {
-          clearInterval(interval);
-          unit.remove();
-          return;
-        }
-        pos -= 2;
-        unit.style.top = pos + 'px';
-      }, 30);
+    function spawnUnit(type, isEnemy) {
+      const unit = document.createElement("div");
+      unit.classList.add(isEnemy ? "enemy-unit" : "unit");
+      unit.textContent = type[0].toUpperCase();
+      unit.style.left = Math.random() * 80 + "%";
+      unit.style[isEnemy ? "top" : "bottom"] = "60px";
+
+      // HP bar
+      const hpBar = document.createElement("div");
+      hpBar.className = "hp-bar";
+      hpBar.style.width = "100%";
+      unit.appendChild(hpBar);
+      unit.dataset.hp = 100;
+
+      field.appendChild(unit);
+
+      moveUnit(unit, isEnemy);
     }
+
+    function moveUnit(unit, isEnemy) {
+      const direction = isEnemy ? 1 : -1;
+      const interval = setInterval(() => {
+        let top = parseFloat(unit.style.top || unit.style.bottom);
+        top += direction * 1.5;
+        if (!isEnemy) unit.style.bottom = `${top}px`;
+        else unit.style.top = `${top}px`;
+
+        // Collision check with enemy units
+        const units = document.querySelectorAll(isEnemy ? ".unit" : ".enemy-unit");
+        units.forEach(target => {
+          const dist = Math.abs(unit.offsetTop - target.offsetTop);
+          if (dist < 30 && !unit.hit) {
+            unit.hit = true;
+            attack(unit, target, interval);
+          }
+        });
+      }, 50);
+    }
+
+    function attack(attacker, target, interval) {
+      clearInterval(interval);
+      const attackInt = setInterval(() => {
+        let hp = parseFloat(target.dataset.hp);
+        hp -= 10;
+        target.dataset.hp = hp;
+        target.querySelector(".hp-bar").style.width = `${hp}%`;
+        if (hp <= 0) {
+          target.remove();
+          clearInterval(attackInt);
+        }
+      }, 500);
+    }
+
+    // Bot behavior
+    setInterval(() => {
+      const botCards = ["skeletons", "knight", "goblins", "archer"];
+      const costs = { skeletons: 3, knight: 5, goblins: 4, archer: 7 };
+      if (Math.random() < 0.7) {
+        const choice = botCards[Math.floor(Math.random() * botCards.length)];
+        const cost = costs[choice];
+        if (elixir >= cost) {
+          spawnUnit(choice, true);
+          elixir -= cost;
+          updateElixir();
+        }
+      }
+    }, 3000);
+
+    updateElixir();
   </script></body>
 </html>
