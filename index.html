@@ -1,0 +1,155 @@
+<!DOCTYPE html><html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Royale</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: linear-gradient(to bottom, #00132b, #000814);
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+    .elixir-bar {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 20px;
+      background: #222;
+      border: 2px solid #FFD700;
+      border-radius: 10px;
+    }
+    .elixir-fill {
+      height: 100%;
+      background: #6cf;
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.5s;
+    }
+    .card-deck {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    .card {
+      width: 70px;
+      height: 90px;
+      background: #333;
+      border: 2px solid #FFD700;
+      border-radius: 10px;
+      color: white;
+      text-align: center;
+      padding: 5px;
+      user-select: none;
+      touch-action: none;
+    }
+    .card.dragging {
+      opacity: 0.5;
+    }
+    .arena {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .unit {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: red;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div class="arena" id="arena"></div><div class="elixir-bar">
+  <div class="elixir-fill" id="elixirFill"></div>
+</div>
+
+<div class="card-deck">
+  <div class="card" draggable="true" data-cost="3" data-type="skeletons">Skelette</div>
+  <div class="card" draggable="true" data-cost="5" data-type="knight">Ritter</div>
+  <div class="card" draggable="true" data-cost="4" data-type="goblins">Kobolde</div>
+  <div class="card" draggable="true" data-cost="7" data-type="archer">Schütze</div>
+</div>
+
+  </div>  <script>
+    let elixir = 0;
+    const maxElixir = 10;
+    const elixirFill = document.getElementById('elixirFill');
+
+    setInterval(() => {
+      if (elixir < maxElixir) {
+        elixir++;
+        elixirFill.style.width = (elixir * 10) + '%';
+      }
+    }, 2000);
+
+    const arena = document.getElementById('arena');
+    let draggedCard = null;
+
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('touchstart', (e) => {
+        draggedCard = card;
+        card.classList.add('dragging');
+      });
+
+      card.addEventListener('touchend', (e) => {
+        card.classList.remove('dragging');
+      });
+    });
+
+    arena.addEventListener('touchend', (e) => {
+      if (draggedCard) {
+        const type = draggedCard.dataset.type;
+        const cost = parseInt(draggedCard.dataset.cost);
+
+        if (elixir >= cost) {
+          elixir -= cost;
+          elixirFill.style.width = (elixir * 10) + '%';
+
+          const touch = e.changedTouches[0];
+          const x = touch.clientX - 20;
+          const y = touch.clientY - 20;
+
+          spawnUnit(type, x, y);
+        }
+        draggedCard = null;
+      }
+    });
+
+    function spawnUnit(type, x, y) {
+      let count = 1;
+      let color = 'white';
+
+      switch (type) {
+        case 'skeletons': count = 3; color = 'gray'; break;
+        case 'goblins': count = 2; color = 'green'; break;
+        case 'archer': color = 'blue'; break;
+        case 'knight': color = 'gold'; break;
+      }
+
+      for (let i = 0; i < count; i++) {
+        const unit = document.createElement('div');
+        unit.classList.add('unit');
+        unit.style.left = (x + i * 20) + 'px';
+        unit.style.top = y + 'px';
+        unit.style.background = color;
+        arena.appendChild(unit);
+      }
+    }
+  </script></body>
+</html>
